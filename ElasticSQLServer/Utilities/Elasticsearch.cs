@@ -21,6 +21,26 @@ namespace ElasticSQLServer.Utilities
             elasticHost = Environment.GetEnvironmentVariable("ElasticHost");
         }
 
+        private string CreateIndex(dynamic sqlResult)
+        {
+            try
+            {
+                using (WebClient client = new WebClient())
+                {
+                    using (Stream data = client.OpenRead(new Uri(DynamicObjects.ElasticIndexMappingReflection(sqlResult))))
+                    {
+                        client.UploadData(new Uri(elasticHost), "PUT", StreamToByteArray(data));
+                    }
+                }
+
+                return "Elasticsearch index is created.";
+            }
+            catch(Exception ex)
+            {
+                return ex.StackTrace;
+            }
+        }
+
         private string WriteToElasticsearch(dynamic sqlResult)
         {
             try
@@ -31,7 +51,7 @@ namespace ElasticSQLServer.Utilities
                 {
                     using (Stream data = client.OpenRead(new Uri(jsonResult)))
                     {
-                        client.UploadData(new Uri(elasticHost), StreamToByteArray(data));
+                        client.UploadData(new Uri(elasticHost), "PUT", StreamToByteArray(data));
                     }
                 }
 
@@ -65,6 +85,16 @@ namespace ElasticSQLServer.Utilities
         public async Task<string> WriteToElasticsearchAsync(dynamic sqlResult)
         {
             return await Task.Run(() => WriteToElasticsearchAsync(sqlResult));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sqlResult"></param>
+        /// <returns></returns>
+        public async Task<string> CreateIndexAsync(dynamic sqlResult)
+        {
+            return await Task.Run(() => CreateIndex(sqlResult));
         }
     }
 }

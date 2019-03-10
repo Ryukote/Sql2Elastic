@@ -10,18 +10,19 @@ namespace ElasticSQLServer
         {
             int hookInterval = Convert.ToInt32(Environment.GetEnvironmentVariable("HookInterval"));
 
-            Timer timer = new Timer();
+            Timer timer = new Timer
+            {
+                Interval = hookInterval,
+                Enabled = true
+            };
 
-            timer.Interval = hookInterval;
-
-            timer.Enabled = true;
-            
             timer.Elapsed += async(sender, e) =>
             {
-                var database = new Database();
-                DynamicObjects.ElasticIndexMappingReflection(await database.GetDynamicDataAsync());
-                var elasticSearch = new Elasticsearch();
-                await elasticSearch.WriteToElasticsearchAsync(await database.GetDynamicDataAsync());
+                Database database = new Database();
+                dynamic dynamicData = await database.GetDynamicDataAsync();
+                Elasticsearch elasticSearch = new Elasticsearch();
+                await elasticSearch.CreateIndexAsync(dynamicData);
+                await elasticSearch.WriteToElasticsearchAsync(dynamicData);
             };
         }
     }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Net;
 
 namespace ElasticSQLServer.Utilities
 {
@@ -10,7 +12,7 @@ namespace ElasticSQLServer.Utilities
         /// <summary>
         /// 
         /// </summary>
-        public static void ElasticIndexMappingReflection(object obj)
+        public static string ElasticIndexMappingReflection(object obj)
         {
             string mapping = "\"settings\":{\"number_of_shards\"" +
                 $"{Environment.GetEnvironmentVariable("ShardNum")}" +
@@ -32,7 +34,7 @@ namespace ElasticSQLServer.Utilities
 
             mapping += "}}}}";
 
-
+            return mapping;
         }
     }
 }
