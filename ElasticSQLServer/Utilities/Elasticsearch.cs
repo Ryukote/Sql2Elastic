@@ -20,11 +20,6 @@ namespace ElasticSQLServer.Utilities
         {
             elasticHost = Environment.GetEnvironmentVariable("ElasticHost");
         }
-        
-        private string CreateElasticIndex()
-        {
-            return "";
-        }
 
         private string WriteToElasticsearch(dynamic sqlResult)
         {

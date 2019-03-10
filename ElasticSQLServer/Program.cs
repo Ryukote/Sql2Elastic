@@ -19,6 +19,7 @@ namespace ElasticSQLServer
             timer.Elapsed += async(sender, e) =>
             {
                 var database = new Database();
+                DynamicObjects.ElasticIndexMappingReflection(await database.GetDynamicDataAsync());
                 var elasticSearch = new Elasticsearch();
                 await elasticSearch.WriteToElasticsearchAsync(await database.GetDynamicDataAsync());
             };
