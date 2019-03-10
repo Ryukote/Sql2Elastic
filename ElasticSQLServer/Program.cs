@@ -21,8 +21,8 @@ namespace ElasticSQLServer
                 Database database = new Database();
                 dynamic dynamicData = await database.GetDynamicDataAsync();
                 Elasticsearch elasticSearch = new Elasticsearch();
-                await elasticSearch.CreateIndexAsync(dynamicData);
-                await elasticSearch.WriteToElasticsearchAsync(dynamicData);
+                Console.WriteLine(await elasticSearch.CreateIndexAsync(dynamicData));
+                Console.WriteLine(await elasticSearch.WriteToElasticsearchAsync(dynamicData));
             };
         }
     }
