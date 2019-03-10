@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 namespace ElasticSQLServer.Utilities
 {
     /// <summary>
-    /// 
+    /// Database context with environment variables provided from Docker.
     /// </summary>
     public class Database : DbContext
     {
         private string connectionString = "";
 
         /// <summary>
-        /// 
+        /// Constructor with filled connection string.
         /// </summary>
         public Database()
         {
@@ -21,25 +21,29 @@ namespace ElasticSQLServer.Utilities
         }
 
         /// <summary>
-        /// 
+        /// Overriding OnConfiguring with usage of SqlServer with provided connection string.
         /// </summary>
-        /// <param name="optionsBuilder"></param>
+        /// <param name="optionsBuilder">Context configuration.</param>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(@connectionString);
         }
 
-        private dynamic GetDynamicData()
+        /// <summary>
+        /// Synchronous version of getting dynamic data. This method is private.
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerable<dynamic> GetDynamicData()
         {
             IEnumerable<dynamic> queryResult = this.Set<dynamic>().FromSql($"select * from {Environment.GetEnvironmentVariable("DbTable")}");
             return queryResult;
         }
 
         /// <summary>
-        /// 
+        /// Asynchronous version of getting dynamic data.
         /// </summary>
         /// <returns></returns>
-        public async Task<dynamic> GetDynamicDataAsync()
+        public async Task<IEnumerable<dynamic>> GetDynamicDataAsync()
         {
             return await Task.Run(() => GetDynamicData());
         }

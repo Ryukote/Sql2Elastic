@@ -1,19 +1,22 @@
 ﻿using System;
-using System.IO;
-using System.Net;
+using System.Collections.Generic;
 
 namespace ElasticSQLServer.Utilities
 {
     /// <summary>
-    /// 
+    /// Class for working with dynamic objects.
     /// </summary>
     public static class DynamicObjects
     {
         /// <summary>
-        /// 
+        /// Method for getting database table column names and mapping their data types to valid Elasticsearch data types using reflection. This method is preparing json for creating a new index in Elasticsearch.
         /// </summary>
-        public static string ElasticIndexMappingReflection(object obj)
+        /// <param name="obj">Data from SQL Server raw query result that needs to be reflected for data types mapping.</param>
+        /// <returns></returns>
+        public static string ElasticIndexMappingReflection(IEnumerable<object> obj)
         {
+            var properties = obj.GetType().GetProperties();
+
             string mapping = "\"settings\":{\"number_of_shards\"" +
                 $"{Environment.GetEnvironmentVariable("ShardNum")}" +
                 "}," +
@@ -21,20 +24,18 @@ namespace ElasticSQLServer.Utilities
                 "\"_doc\" : {" +
                 "\"properties\" : {";
 
-            for(int i = 0; i < obj.GetType().GetProperties().Length; i++)
+            for(int i = 0; i < properties.Length; i++)
             {
-                mapping += $"\"{obj.GetType().GetProperties()[i].Name.ToLower()}\" : " + "{ \"type\" : " + 
-                    $"{Mapping.GetMappedTypeValue(obj.GetType().GetProperties()[i].GetType().ToString())}";
+                mapping += $"\"{properties[i].Name.ToLower()}\" : " + "{ \"type\" : " + 
+                    $"{Mapping.GetMappedTypeValue(properties[i].GetType().ToString())}";
 
-                if (!(i == obj.GetType().GetProperties().Length - 1))
+                if (i != properties.Length - 1)
                 {
                     mapping += ",";    
                 }
             }
 
-            mapping += "}}}}";
-
-            return mapping;
+            return mapping += "}}}}";
         }
     }
 }

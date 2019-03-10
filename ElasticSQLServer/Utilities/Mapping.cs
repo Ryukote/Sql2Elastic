@@ -3,14 +3,14 @@
 namespace ElasticSQLServer.Utilities
 {
     /// <summary>
-    /// 
+    /// Class for mapping SQL Server data types to Elasticsearch data types.
     /// </summary>
     public static class Mapping
     {
         /// <summary>
-        /// 
+        /// Method for mapping SQL Server data type to Elasticsearch data type.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">Value that represents SQL Server data type reflected into C# data type.</param>
         /// <returns></returns>
         public static string GetMappedTypeValue(string key)
         {
@@ -18,16 +18,13 @@ namespace ElasticSQLServer.Utilities
 
             dictionary.Add("String", "text");
             dictionary.Add("Int", "integer");
-            
-            if(dictionary.ContainsKey(key))
+
+            if (dictionary.ContainsKey(key))
             {
                 return dictionary.GetValueOrDefault(key);
             }
 
-            else
-            {
-                return "";
-            }
+            return "";
         }
     }
 }

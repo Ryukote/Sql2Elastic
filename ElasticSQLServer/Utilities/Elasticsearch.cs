@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 namespace ElasticSQLServer.Utilities
 {
     /// <summary>
-    /// 
+    /// Class for Elasticsearch.
     /// </summary>
     public class Elasticsearch
     {
@@ -21,7 +22,12 @@ namespace ElasticSQLServer.Utilities
             elasticHost = Environment.GetEnvironmentVariable("ElasticHost");
         }
 
-        private string CreateIndex(dynamic sqlResult)
+        /// <summary>
+        /// Creating Elasticsearch index based on given SQL Server table. This method is private.
+        /// </summary>
+        /// <param name="sqlResult">Data selected from raw sql.</param>
+        /// <returns></returns>
+        private string CreateIndex(IEnumerable<dynamic> sqlResult)
         {
             try
             {
@@ -41,7 +47,12 @@ namespace ElasticSQLServer.Utilities
             }
         }
 
-        private string WriteToElasticsearch(dynamic sqlResult)
+        /// <summary>
+        /// Writting data to Elasticsearch index.
+        /// </summary>
+        /// <param name="sqlResult">Data selected from raw sql.</param>
+        /// <returns></returns>
+        private string WriteToElasticsearch(IEnumerable<dynamic> sqlResult)
         {
             try
             {
@@ -63,6 +74,11 @@ namespace ElasticSQLServer.Utilities
             }
         }
 
+        /// <summary>
+        /// Converting stream to byte array. This method is private.
+        /// </summary>
+        /// <param name="input">Stream representation of json data from SQL Server result.</param>
+        /// <returns></returns>
         private byte[] StreamToByteArray(Stream input)
         {
             byte[] buffer = new byte[16 * 1024];
@@ -78,9 +94,9 @@ namespace ElasticSQLServer.Utilities
         }
 
         /// <summary>
-        /// 
+        /// Asynchronous version of writting data to Elasticsearch index.
         /// </summary>
-        /// <param name="sqlResult"></param>
+        /// <param name="sqlResult">Data selected from raw sql.</param>
         /// <returns></returns>
         public async Task<string> WriteToElasticsearchAsync(dynamic sqlResult)
         {
@@ -88,11 +104,11 @@ namespace ElasticSQLServer.Utilities
         }
 
         /// <summary>
-        /// 
+        /// Asynchronous version of creating Elasticsearch index.
         /// </summary>
-        /// <param name="sqlResult"></param>
+        /// <param name="sqlResult">Data selected from raw sql.</param>
         /// <returns></returns>
-        public async Task<string> CreateIndexAsync(dynamic sqlResult)
+        public async Task<string> CreateIndexAsync(IEnumerable<dynamic> sqlResult)
         {
             return await Task.Run(() => CreateIndex(sqlResult));
         }
