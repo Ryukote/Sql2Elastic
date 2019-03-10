@@ -26,6 +26,16 @@
             </summary>
             <returns></returns>
         </member>
+        <member name="T:ElasticSQLServer.Utilities.DynamicObjects">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:ElasticSQLServer.Utilities.DynamicObjects.ElasticIndexMappingReflection(System.Object)">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="T:ElasticSQLServer.Utilities.Elasticsearch">
             <summary>
             
@@ -41,6 +51,25 @@
             
             </summary>
             <param name="sqlResult"></param>
+            <returns></returns>
+        </member>
+        <member name="M:ElasticSQLServer.Utilities.Elasticsearch.CreateIndexAsync(System.Object)">
+            <summary>
+            
+            </summary>
+            <param name="sqlResult"></param>
+            <returns></returns>
+        </member>
+        <member name="T:ElasticSQLServer.Utilities.Mapping">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="M:ElasticSQLServer.Utilities.Mapping.GetMappedTypeValue(System.String)">
+            <summary>
+            
+            </summary>
+            <param name="key"></param>
             <returns></returns>
         </member>
     </members>
