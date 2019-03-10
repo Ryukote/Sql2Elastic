@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ElasticSQLServer.Utilities;
+using System;
+using System.Timers;
 
 namespace ElasticSQLServer
 {
@@ -6,7 +8,20 @@ namespace ElasticSQLServer
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            int hookInterval = Convert.ToInt32(Environment.GetEnvironmentVariable("HookInterval"));
+
+            Timer timer = new Timer();
+
+            timer.Interval = hookInterval;
+
+            timer.Enabled = true;
+            
+            timer.Elapsed += async(sender, e) =>
+            {
+                var database = new Database();
+                var elasticSearch = new Elasticsearch();
+                await elasticSearch.WriteToElasticsearchAsync(await database.GetDynamicDataAsync());
+            };
         }
     }
 }
