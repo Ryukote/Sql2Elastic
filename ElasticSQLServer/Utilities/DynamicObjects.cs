@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data;
 
 namespace ElasticSQLServer.Utilities
 {
@@ -11,25 +11,25 @@ namespace ElasticSQLServer.Utilities
         /// <summary>
         /// Method for getting database table column names and mapping their data types to valid Elasticsearch data types using reflection. This method is preparing json for creating a new index in Elasticsearch.
         /// </summary>
-        /// <param name="obj">Data from SQL Server raw query result that needs to be reflected for data types mapping.</param>
-        /// <returns></returns>
-        public static string ElasticIndexMappingReflection(IEnumerable<object> obj)
+        /// <param name="obj">Data from SQL Server data table result that needs to be reflected for data types mapping.</param>
+        /// <returns>Returns prepared json string that defines mapping for specific document in index.</returns>
+        public static string ElasticIndexMappingReflection(DataTable obj)
         {
-            var properties = obj.GetType().GetProperties();
+            var properties = obj.Columns;
 
             string mapping = "\"settings\":{\"number_of_shards\"" +
                 $"{Environment.GetEnvironmentVariable("ShardNum")}" +
                 "}," +
                 "\"mappings\" : {" +
-                "\"_doc\" : {" +
+                $"\"{Environment.GetEnvironmentVariable("ElasticDocument")}\"" + " : {" +
                 "\"properties\" : {";
 
-            for(int i = 0; i < properties.Length; i++)
+            for(int i = 0; i < properties.Count; i++)
             {
-                mapping += $"\"{properties[i].Name.ToLower()}\" : " + "{ \"type\" : " + 
+                mapping += $"\"{properties[i].ColumnName.ToLower()}\" : " + "{ \"type\" : " + 
                     $"{Mapping.GetMappedTypeValue(properties[i].GetType().ToString())}";
 
-                if (i != properties.Length - 1)
+                if (i != properties.Count - 1)
                 {
                     mapping += ",";    
                 }

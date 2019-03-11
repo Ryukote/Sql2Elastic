@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace ElasticSQLServer.Utilities
@@ -8,44 +8,38 @@ namespace ElasticSQLServer.Utilities
     /// <summary>
     /// Database context with environment variables provided from Docker.
     /// </summary>
-    public class Database : DbContext
+    public class Database
     {
         private string connectionString = "";
+        private string dbTable = "";
 
         /// <summary>
-        /// Constructor with filled connection string.
+        /// Constructor with filled connection string and database table that needs to be migrated to Elasticsearch.
         /// </summary>
         public Database()
         {
-            connectionString = $"Data Source={Environment.GetEnvironmentVariable("SqlHost")};Initial Catalog={Environment.GetEnvironmentVariable("DbName")};Persist Security Info=True;User ID={Environment.GetEnvironmentVariable("DbUser")};Password={Environment.GetEnvironmentVariable("DbPassword")}";
+            connectionString = $"Data Source={Environment.GetEnvironmentVariable("SqlHost")};Initial Catalog={Environment.GetEnvironmentVariable("DbName")};Persist Security Info=True;User ID={Environment.GetEnvironmentVariable("DbUsername")};Password={Environment.GetEnvironmentVariable("DbPassword")}";
+
+            dbTable = $"{Environment.GetEnvironmentVariable("DbTable")}";
         }
 
         /// <summary>
-        /// Overriding OnConfiguring with usage of SqlServer with provided connection string.
+        /// Getting dynamic data.
         /// </summary>
-        /// <param name="optionsBuilder">Context configuration.</param>
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        /// <returns>Filled data table that will be used for migration to Elasticsearch document.</returns>
+        public async Task<DataTable> GetDynamicDataAsync()
         {
-            optionsBuilder.UseSqlServer(@connectionString);
-        }
+            using (SqlConnection connection = new SqlConnection(@connectionString))
+            {
+                SqlCommand command = new SqlCommand($"select * from {dbTable}", connection);
+                await command.Connection.OpenAsync();
 
-        /// <summary>
-        /// Synchronous version of getting dynamic data. This method is private.
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerable<dynamic> GetDynamicData()
-        {
-            IEnumerable<dynamic> queryResult = this.Set<dynamic>().FromSql($"select * from {Environment.GetEnvironmentVariable("DbTable")}");
-            return queryResult;
-        }
+                DataTable dataTable = new DataTable();
+                dataTable.Load(await command.ExecuteReaderAsync());
 
-        /// <summary>
-        /// Asynchronous version of getting dynamic data.
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IEnumerable<dynamic>> GetDynamicDataAsync()
-        {
-            return await Task.Run(() => GetDynamicData());
+                command.Connection.Close();
+                return dataTable;
+            }
         }
     }
 }

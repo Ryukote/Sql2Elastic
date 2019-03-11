@@ -1,8 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace ElasticSQLServer.Utilities
@@ -13,6 +16,9 @@ namespace ElasticSQLServer.Utilities
     public class Elasticsearch
     {
         private string elasticHost = "";
+        private string elasticIndex = "";
+        private string url = "";
+        private string documentUrl = "";
 
         /// <summary>
         /// Elasticsearch constructor.
@@ -20,97 +26,121 @@ namespace ElasticSQLServer.Utilities
         public Elasticsearch()
         {
             elasticHost = Environment.GetEnvironmentVariable("ElasticHost");
+            elasticIndex = Environment.GetEnvironmentVariable("ElasticIndex");
+            url = elasticHost + "/" + elasticIndex;
+            documentUrl = url + "/" + Environment.GetEnvironmentVariable("ElasticDocument");
         }
 
         /// <summary>
-        /// Creating Elasticsearch index based on given SQL Server table. This method is private.
+        /// Creating Elasticsearch index based on given SQL Server table.
         /// </summary>
-        /// <param name="sqlResult">Data selected from raw sql.</param>
-        /// <returns></returns>
-        private string CreateIndex(IEnumerable<dynamic> sqlResult)
+        /// <param name="sqlResult">Data selected from ADO.NET query.</param>
+        public async Task CreateIndexAsync(DataTable sqlResult)
         {
             try
             {
-                using (WebClient client = new WebClient())
+                using (HttpClient client = new HttpClient())
                 {
-                    using (Stream data = client.OpenRead(new Uri(DynamicObjects.ElasticIndexMappingReflection(sqlResult))))
+                    using (HttpContent httpContent = new StringContent(DynamicObjects.ElasticIndexMappingReflection(sqlResult)))
                     {
-                        client.UploadData(new Uri(elasticHost), "PUT", StreamToByteArray(data));
+                        httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                        HttpResponseMessage responseMessage = client.PutAsync(url, httpContent).Result;
+
+                        string message = await responseMessage.Content.ReadAsStringAsync();
+
+                        if (responseMessage.StatusCode == HttpStatusCode.OK)
+                        {
+                            Console.WriteLine("Elasticsearch index is created.");
+                            Console.WriteLine(message);
+                        }
+
+                        else
+                        {
+                            Console.WriteLine("Something went wrong. Check the response message from Elasticsearch.");
+                            Console.WriteLine(message);
+                        }
                     }
                 }
-
-                return "Elasticsearch index is created.";
             }
-            catch(Exception ex)
+            catch (HttpRequestException ex)
             {
-                return ex.StackTrace;
+                Console.WriteLine("Something went wrong.");
+                Console.WriteLine(ex.StackTrace);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Something went wrong.");
+                Console.WriteLine(ex.StackTrace);
             }
         }
 
         /// <summary>
         /// Writting data to Elasticsearch index.
         /// </summary>
-        /// <param name="sqlResult">Data selected from raw sql.</param>
-        /// <returns></returns>
-        private string WriteToElasticsearch(IEnumerable<dynamic> sqlResult)
+        /// <param name="sqlResult">Data selected from ADO.NET query.</param>
+        public async Task WriteToElasticsearchAsync(DataTable sqlResult)
         {
             try
             {
                 string jsonResult = JsonConvert.SerializeObject(sqlResult);
 
-                using (WebClient client = new WebClient())
+                List<dynamic> list = new List<dynamic>();
+
+                var rows = sqlResult.Rows;
+                var columns = sqlResult.Columns;
+
+                string json = "{\"" + $"{elasticIndex}" + ":[";
+
+                for (int i = 0; i < rows.Count - 1; i++)
                 {
-                    using (Stream data = client.OpenRead(new Uri(jsonResult)))
+                    json += "{";
+
+                    for (int j = 0; j < columns.Count - 1; j++)
                     {
-                        client.UploadData(new Uri(elasticHost), "PUT", StreamToByteArray(data));
+                        json += $"\"{columns[j].ColumnName.ToLower()}\":\"{rows[i].ItemArray[j]}\"";
+
+                        if (j != columns.Count - 2)
+                        {
+                            json += ",";
+                        }
+
+                        else
+                        {
+                            json += "}";
+                        }
+                    }
+
+                    if (i != rows.Count - 2)
+                    {
+                        json += ",";
+                    }
+
+                    else
+                    {
+                        json += "]}";
                     }
                 }
 
-                return "Data from SQL Server is posted to Elasticsearch.";
+                using (HttpClient client = new HttpClient())
+                {
+                    using (HttpContent httpContent = new StringContent(json))
+                    {
+                        httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                        HttpResponseMessage response = client.PostAsync(documentUrl, httpContent).Result;
+                        Console.WriteLine(await response.Content.ReadAsStringAsync());
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine("Something went wrong.");
+                Console.WriteLine(ex.StackTrace);
             }
             catch (Exception ex)
             {
-                return ex.StackTrace;
+                Console.WriteLine("Something went wrong.");
+                Console.WriteLine(ex.StackTrace);
             }
-        }
-
-        /// <summary>
-        /// Converting stream to byte array. This method is private.
-        /// </summary>
-        /// <param name="input">Stream representation of json data from SQL Server result.</param>
-        /// <returns></returns>
-        private byte[] StreamToByteArray(Stream input)
-        {
-            byte[] buffer = new byte[16 * 1024];
-            using (MemoryStream ms = new MemoryStream())
-            {
-                int read;
-                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    ms.Write(buffer, 0, read);
-                }
-                return ms.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Asynchronous version of writting data to Elasticsearch index.
-        /// </summary>
-        /// <param name="sqlResult">Data selected from raw sql.</param>
-        /// <returns></returns>
-        public async Task<string> WriteToElasticsearchAsync(dynamic sqlResult)
-        {
-            return await Task.Run(() => WriteToElasticsearchAsync(sqlResult));
-        }
-
-        /// <summary>
-        /// Asynchronous version of creating Elasticsearch index.
-        /// </summary>
-        /// <param name="sqlResult">Data selected from raw sql.</param>
-        /// <returns></returns>
-        public async Task<string> CreateIndexAsync(IEnumerable<dynamic> sqlResult)
-        {
-            return await Task.Run(() => CreateIndex(sqlResult));
         }
     }
 }
