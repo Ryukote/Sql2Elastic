@@ -12,36 +12,12 @@ namespace ElasticSQLServer.Contracts.Data
         /// Creating Elasticsearch index.
         /// </summary>
         /// <returns></returns>
-        Task CreateIndex(DataTable sqlData);
-
-        /// <summary>
-        /// Delete existing Elasticsearch index.
-        /// </summary>
-        /// <returns></returns>
-        Task DeleteIndex();
-
-        /// <summary>
-        /// Creating Elasticsearch document in the index.
-        /// </summary>
-        /// <returns></returns>
-        Task CreateDocument();
-
-        /// <summary>
-        /// Delete existing Elasticsearch document in the index.
-        /// </summary>
-        /// <returns></returns>
-        Task DeleteDocument();
-
-        /// <summary>
-        /// Updating existing Elasticsearch document in the index.
-        /// </summary>
-        /// <returns></returns>
-        Task UpdateDocument();
+        Task CreateIndex();
 
         /// <summary>
         /// Inserting new records in the Elasticsearch document in the index.
         /// </summary>
         /// <returns></returns>
-        Task InsertIntoDocument();
+        Task InsertIntoDocument(DataTable sqlData);
     }
 }
