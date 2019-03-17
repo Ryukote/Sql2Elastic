@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace ElasticSQLServer.Utilities.Data.Destination
 {
     /// <summary>
-    /// 
+    /// Elasticsearch data.
     /// </summary>
     public class ElasticSearch6Data : IDataDestination
     {
@@ -22,13 +22,17 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         private string elasticIndex = "";
         private string url = "";
         private string documentUrl = "";
-        private string documentIdQuery = "";
         private string hashRecord = "";
         private string documentId = "";
         private byte[] hash;
+        private int counter = 1;
+        private List<string> records;
+        private StringBuilder builder;
+        private StringBuilder recordBuilder;
+        private StringBuilder jsonBuilder;
 
         /// <summary>
-        /// 
+        /// Elasticsearch data constructor.
         /// </summary>
         public ElasticSearch6Data()
         {
@@ -36,15 +40,19 @@ namespace ElasticSQLServer.Utilities.Data.Destination
             elasticIndex = Environment.GetEnvironmentVariable("ElasticIndex");
             url = elasticHost + "/" + elasticIndex;
             documentUrl = url + "/" + Environment.GetEnvironmentVariable("ElasticDocument");
-            documentIdQuery = documentUrl + "/_search?pretty=true";
+            records = new List<string>();
+            builder = new StringBuilder();
+            recordBuilder = new StringBuilder();
+            jsonBuilder = new StringBuilder();
         }
 
         /// <summary>
-        /// 
+        /// Creating Elasticsearch index.
         /// </summary>
         public async Task CreateIndex()
         {
-            var content = new Index().CreateIndexJson(await new SQLServerData().GetDataTypes());
+            var result = await new SQLServerData().GetDataTypes();
+            var content = new Index().CreateIndexJson(result);
 
             using (HttpContent httpContent = new StringContent(content))
             {
@@ -52,39 +60,40 @@ namespace ElasticSQLServer.Utilities.Data.Destination
                 await new ElasticClient().ElasticPut(url, httpContent);
             }
         }
-        
+
         /// <summary>
-        /// 
+        /// Converting source data to Elasticsearch data and saving it if the data is new.
         /// </summary>
         /// <param name="sqlData"></param>
         public async Task InsertIntoDocument(DataTable sqlData)
         {
             try
             {
-                List<dynamic> list = new List<dynamic>();
-
                 var rows = sqlData.Rows;
                 var columns = sqlData.Columns;
 
-                StringBuilder builder = new StringBuilder();
-                StringBuilder recordBuilder = new StringBuilder();
+                builder.Append("{\"" + elasticIndex + "\":[");
 
-                //{elasticIndex}
-                builder.Append("{\"testindex\":[");
+                char[] value = { '{' };
 
-                for (int i = 0; i < rows.Count; i++)
+                for (int i = 0; i <= rows.Count - 1; i++)
                 {
-                    builder.Append("{");
-
                     StringBuilder columnBuilder = new StringBuilder();
 
-                    for (int j = 0; j < columns.Count + 1; j++)
-                    {
-                        columnBuilder.Append($"\"{columns[j].ColumnName.ToLower()}\":\"{rows[i].ItemArray[j]}\"");
-                        recordBuilder.Append($"{rows[i].ItemArray[j]}");
+                    columnBuilder.Append("{");
 
-                        if (j != columns.Count - 1)
+                    for (int j = 0; j <= columns.Count; j++)
+                    {
+                        if (j != columns.Count)
                         {
+                            var columnValue = columns[j].ColumnName.ToLower();
+                            var cellValue = rows[i].ItemArray[j];
+
+                            records.Add($"\"{columnValue}\":\"{cellValue}\"");
+
+                            columnBuilder.Append($"\"{columnValue}\":\"{cellValue}\",");
+
+                            recordBuilder.Append($"{cellValue}");
                             recordBuilder.Append(",");
                         }
 
@@ -97,41 +106,61 @@ namespace ElasticSQLServer.Utilities.Data.Destination
                                 hash = md5.Hash;
                             }
 
-                            if(await HashExist(documentId, hash.ToString()))
+                            StringBuilder hashBuilder = new StringBuilder();
+
+                            foreach (var hashValue in hash)
                             {
+                                hashBuilder.Append(hashValue.ToString("x2"));
+                            }
+
+                            hashRecord = hashBuilder.ToString();
+
+                            if (!(await HashExist(documentId + "/_search", hashRecord)))
+                            {
+
+                                columnBuilder.Append($"\"hash\" : \"{hashRecord}\"");
                                 columnBuilder.Append("}");
                                 builder.Append(columnBuilder.ToString());
-                                builder.Append($"\"hash\" : \"{hash.ToString()}\"");
+                                counter++;
+
+                                if (i != rows.Count - 1)
+                                {
+                                    builder.Append(",");
+                                }
                             }
                         }
                     }
-
-                    if (i != rows.Count - 1)
-                    {
-                        builder.Append(",");
-                    }
-
-                    else
-                    {
-                        builder.Append("]}");
-                    }
                 }
 
-                using (HttpContent httpContent = new StringContent(builder.ToString()))
+                builder.Append("]}");
+
+                jsonBuilder.Append(builder.ToString());
+
+                string jsonResult = jsonBuilder.ToString();
+
+                int open = jsonResult.IndexOf('[', jsonResult.Length - 3);
+                int close = jsonResult.IndexOf(']', jsonResult.Length - 2);
+
+                if (open == -1 && close >= 0)
                 {
-                    httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                    await new ElasticClient().ElasticPost(documentUrl, httpContent);
+                    using (HttpContent httpContent = new StringContent(jsonResult))
+                    {
+                        httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                        await new ElasticClient().ElasticPost(documentUrl, httpContent);
+
+                        Console.WriteLine($"New records are inserted into document at: {DateTime.Now.ToString()}");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Something went wrong.");
+                Console.WriteLine(ex.Message);
                 Console.WriteLine(ex.StackTrace);
             }
         }
 
         /// <summary>
-        /// 
+        /// Getting Elasticsearch document id.
         /// </summary>
         /// <returns></returns>
         private async Task GetDocumentId()
@@ -139,25 +168,10 @@ namespace ElasticSQLServer.Utilities.Data.Destination
             string response = "";
 
             StringBuilder builder = new StringBuilder();
-            builder.Append("\"size\":1,");
-            builder.Append("\"query\":{");
-            builder.Append("\"match_all\":{}");
-            builder.Append("}");
-
-            using (HttpContent httpContent = new StringContent(builder.ToString()))
-            {
-                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                await new ElasticClient().ElasticGet(documentIdQuery, httpContent);
-                documentId = JsonConvert.DeserializeObject<dynamic>(response)[3]._id;
-            }
+            response = await new ElasticClient().ElasticGet(documentUrl + "/_search");
+            documentId = JsonConvert.DeserializeObject<dynamic>(response)._id;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="documentId"></param>
-        /// <param name="hash"></param>
-        /// <returns></returns>
         private async Task<bool> HashExist(string documentId, string hash)
         {
             try
@@ -166,16 +180,17 @@ namespace ElasticSQLServer.Utilities.Data.Destination
 
                 StringBuilder builder = new StringBuilder();
 
-                builder.Append("{\"query\": { \"match\": {\"hash\" : \"");
-                builder.Append($"{hash.ToString()}");
+                builder.Append("{\"query\": { \"query_string\": {\"query\" : \"");
+                builder.Append($"{hash}\"");
+                builder.Append("}}}");
 
                 using (HttpContent httpContent = new StringContent(builder.ToString()))
                 {
                     httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                    return await new ElasticClient().ElasticGetBool(documentIdQuery, httpContent);
+                    return await new ElasticClient().ElasticGetBool(documentId + "/_search?pretty=true", httpContent);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 return false;

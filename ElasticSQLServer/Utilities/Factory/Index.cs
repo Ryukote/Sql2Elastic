@@ -1,4 +1,5 @@
 ﻿using ElasticSQLServer.Contracts.Data;
+using ElasticSQLServer.Utilities.Data.Mappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,12 +8,12 @@ using System.Text;
 namespace ElasticSQLServer.Utilities.Factory
 {
     /// <summary>
-    /// 
+    /// Elasticsearch index.
     /// </summary>
     public class Index : IIndexJson
     {
         /// <summary>
-        /// 
+        /// Creation of Elasticsearch index.
         /// </summary>
         /// <param name="indexData"></param>
         /// <returns></returns>
@@ -20,28 +21,37 @@ namespace ElasticSQLServer.Utilities.Factory
         {
             List<Tuple<string, string>> list = indexData.ToList();
             StringBuilder builder = new StringBuilder();
-
-            string mapping = builder.Append("\"settings\":{\"number_of_shards\"")
-                .Append($"{Environment.GetEnvironmentVariable("ShardNum")}")
+            SQLServer sqlServer = new SQLServer();
+            string document = Environment.GetEnvironmentVariable("ElasticDocument");
+            Console.WriteLine(document);
+            builder.Append("{\"settings\":{\"number_of_shards\"")
+                .Append(":1")
                 .Append("},")
                 .Append("\"mappings\" : {")
-                .Append($"\"{Environment.GetEnvironmentVariable("ElasticDocument")}\"")
-                .Append(" : {")
-                .Append("\"properties\" : {").ToString();
+                .Append("\"" + document + "\" : {")
+                .Append("\"properties\" : {");
 
-            for (int i = 0; i < list.Count - 1; i++)
+            for (int i = 0; i < list.Count; i++)
             {
-                mapping = builder.Append($"\"{list[i].Item1.ToLower()}\" : ")
+                builder.Append($"\"{list[i].Item1.ToLower()}\" : ")
                     .Append("{ \"type\" : ")
-                    .Append($"{Mapping.GetMappedTypeValue(list[i].Item2)}").ToString();
-                
+                    .Append($"\"{sqlServer.GetMappedType(list[i].Item2)}\"")
+                    .Append("}");
+
                 if (i != list.Count - 1)
                 {
-                    mapping = builder.Append(",").ToString();
+                    builder.Append(",");
+                }
+
+                else
+                {
+                    builder.Append("}");
                 }
             }
 
-            return mapping = builder.Append("}}}}").ToString();
+            string result = builder.Append("}}}}").ToString();
+
+            return result;
         }
     }
 }

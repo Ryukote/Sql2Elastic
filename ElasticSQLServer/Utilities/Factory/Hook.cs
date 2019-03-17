@@ -6,26 +6,24 @@ using System.Threading.Tasks;
 namespace ElasticSQLServer.Utilities.Factory
 {
     /// <summary>
-    /// 
+    /// Hook with database and Elasticsearch.
     /// </summary>
     public class Hook
     {
         SQLServerData serverData;
-        DataTable dataTable;
         ElasticSearch6Data elasticSearch;
 
         /// <summary>
-        /// 
+        /// Hook constructor.
         /// </summary>
         public Hook()
         {
             serverData = new SQLServerData();
-            dataTable = new DataTable();
             elasticSearch = new ElasticSearch6Data();
         }
 
         /// <summary>
-        /// 
+        /// Iteration process for inserting records into document.
         /// </summary>
         /// <returns></returns>
         public async Task IterationProcess()
@@ -34,7 +32,7 @@ namespace ElasticSQLServer.Utilities.Factory
         }
 
         /// <summary>
-        /// 
+        /// Index creation process.
         /// </summary>
         /// <returns></returns>
         public async Task StartProcess()

@@ -1,44 +1,45 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace ElasticSQLServer.Utilities.Data.Destination
 {
     /// <summary>
-    /// 
+    /// Elasticsearch client.
     /// </summary>
     public class ElasticClient
     {
         /// <summary>
-        /// 
+        /// Elasticsearch with get method.
         /// </summary>
         /// <returns></returns>
-        public async Task ElasticGet(string url, HttpContent httpContent)
+        public async Task<string> ElasticGet(string url)
         {
             using (HttpClient client = new HttpClient())
             {
                 try
                 {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                    HttpResponseMessage response = await client.GetAsync(url);
 
-                    request.Content = httpContent;
+                    string value = await response.Content.ReadAsStringAsync();
 
-                    //Environment.GetEnvironmentVariable("ElasticIndex")
-                    HttpResponseMessage response = client.SendAsync(request).Result;
-
-                    Console.WriteLine(await response.Content.ReadAsStringAsync());
+                    return value;
                 }
                 catch (HttpRequestException e)
                 {
                     Console.WriteLine("\nException Caught!");
                     Console.WriteLine("Message :{0} ", e.Message);
+                    return "";
                 }
             }
         }
 
         /// <summary>
-        /// 
+        /// Checking if record exist in Elasticsearch document.
         /// </summary>
+        /// <param name="url">Where method will check if record exist.</param>
+        /// <param name="httpContent">Record that will be checked for existance.</param>
         /// <returns></returns>
         public async Task<bool> ElasticGetBool(string url, HttpContent httpContent)
         {
@@ -46,48 +47,48 @@ namespace ElasticSQLServer.Utilities.Data.Destination
             {
                 try
                 {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                    string newUrl = url.Split('?')[0];
 
-                    request.Content = httpContent;
+                    HttpResponseMessage response = await client.PostAsync(newUrl, httpContent);
 
-                    //Environment.GetEnvironmentVariable("ElasticIndex")
-                    HttpResponseMessage response = client.SendAsync(request).Result;
+                    var result = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
 
-                    Console.WriteLine(await response.Content.ReadAsStringAsync());
+                    return result.hits.total == 0 ? false : true;
                 }
                 catch (HttpRequestException e)
                 {
                     Console.WriteLine("\nException Caught!");
                     Console.WriteLine("Message :{0} ", e.Message);
+                    return true;
                 }
             }
         }
 
         /// <summary>
-        /// 
+        /// Elasticsearch post method.
         /// </summary>
         /// <returns></returns>
-        public async Task ElasticPost(string url, HttpContent httpContent)
+        public async Task<string> ElasticPost(string url, HttpContent httpContent)
         {
             using (HttpClient client = new HttpClient())
             {
                 try
                 {
-                    //Environment.GetEnvironmentVariable("ElasticIndex")
-                    HttpResponseMessage response = client.PostAsync(url, httpContent).Result;
+                    HttpResponseMessage response = await client.PostAsync(url, httpContent);
 
-                    Console.WriteLine(await response.Content.ReadAsStringAsync());
+                    return await response.Content.ReadAsStringAsync();
                 }
                 catch (HttpRequestException e)
                 {
                     Console.WriteLine("\nException Caught!");
                     Console.WriteLine("Message :{0} ", e.Message);
+                    return "";
                 }
             }
         }
 
         /// <summary>
-        /// 
+        /// Elasticsearch put method.
         /// </summary>
         /// <returns></returns>
         public async Task ElasticPut(string url, HttpContent httpContent)
@@ -96,36 +97,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
             {
                 try
                 {
-                    //Environment.GetEnvironmentVariable("ElasticIndex")
-                    HttpResponseMessage response = client.PutAsync(url, httpContent).Result;
-
-                    Console.WriteLine(await response.Content.ReadAsStringAsync());
-                }
-                catch (HttpRequestException e)
-                {
-                    Console.WriteLine("\nException Caught!");
-                    Console.WriteLine("Message :{0} ", e.Message);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public async Task ElasticDelete(string url, HttpContent httpContent)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                try
-                {
-                    //Environment.GetEnvironmentVariable("ElasticIndex")
-                    var content = new HttpRequestMessage(HttpMethod.Delete, new Uri(url));
-                    content.Content = httpContent;
-
-                    HttpResponseMessage response = client.SendAsync(content).Result;
-
-                    Console.WriteLine(await response.Content.ReadAsStringAsync());
+                    HttpResponseMessage response = await client.PutAsync(url, httpContent);
                 }
                 catch (HttpRequestException e)
                 {

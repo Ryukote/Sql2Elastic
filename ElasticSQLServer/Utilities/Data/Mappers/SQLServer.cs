@@ -28,6 +28,7 @@ namespace ElasticSQLServer.Utilities.Data.Mappers
             dictionary.Add("float", "float");
             dictionary.Add("date", "date");
             dictionary.Add("datetime", "date");
+            dictionary.Add("datetime2", "date");
             dictionary.Add("time", "date");
             dictionary.Add("text", "text");
             dictionary.Add("char", "text");

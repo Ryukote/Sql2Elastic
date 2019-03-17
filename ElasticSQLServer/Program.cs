@@ -10,20 +10,26 @@ namespace ElasticSQLServer
         {
             try
             {
+                Hook hook = new Hook();
+
                 Timer timer = new Timer
                 {
-                    Interval = 3600000,
+                    Interval = 10000,
                     Enabled = true
                 };
+
+                hook.StartProcess().GetAwaiter();
 
                 timer.Start();
 
                 timer.Elapsed += async (sender, e) =>
                 {
-                    await new Hook().IterationProcess();
+                    await hook.IterationProcess();
                 };
+
+                Console.ReadLine();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 Console.ReadKey();
