@@ -7,6 +7,8 @@ so Elasticsearch can store data that is 1 on 1 with data in SQL Server.
 Application is hooking on database every 10 minute, to avoid potential handling of big data where it wouldn't have enough time to
 do what it needs to to.
 
+You can use this application with docker. Find more on: https://hub.docker.com/r/ryukote/elasticdatabasehook
+
 # Types of databases that it can hook to
 For now it can only hook to SQL Server
 
