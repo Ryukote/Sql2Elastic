@@ -37,16 +37,16 @@ WORKDIR /app
 
 FROM microsoft/dotnet:2.1-sdk AS build
 WORKDIR /src
-COPY ElasticSQLServer/ElasticSQLServer.csproj ElasticSQLServer/
-RUN dotnet restore ElasticSQLServer/ElasticSQLServer.csproj
+COPY ElasticDatabaseHook/ElasticDatabaseHook.csproj ElasticDatabaseHook/
+RUN dotnet restore ElasticDatabaseHook/ElasticDatabaseHook.csproj
 COPY . .
-WORKDIR /src/ElasticSQLServer
-RUN dotnet build ElasticSQLServer.csproj -c Release -o /app
+WORKDIR /src/ElasticDatabaseHook
+RUN dotnet build ElasticDatabaseHook.csproj -c Release -o /app
 
 FROM build AS publish
-RUN dotnet publish ElasticSQLServer.csproj -c Release -o /app
+RUN dotnet publish ElasticDatabaseHook.csproj -c Release -o /app
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app .
-ENTRYPOINT ["dotnet", "ElasticSQLServer.dll"]
+ENTRYPOINT ["dotnet", "ElasticDatabaseHook.dll"]
