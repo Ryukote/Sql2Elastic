@@ -26,10 +26,10 @@ namespace ElasticSQLServer.Utilities.Data.Destination
 
                     return value;
                 }
-                catch (HttpRequestException e)
+                catch (Exception ex)
                 {
-                    Console.WriteLine("\nException Caught!");
-                    Console.WriteLine("Message :{0} ", e.Message);
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
                     return "";
                 }
             }
@@ -47,18 +47,16 @@ namespace ElasticSQLServer.Utilities.Data.Destination
             {
                 try
                 {
-                    string newUrl = url.Split('?')[0];
-
-                    HttpResponseMessage response = await client.PostAsync(newUrl, httpContent);
+                    HttpResponseMessage response = await client.PostAsync(url, httpContent);
 
                     var result = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
 
                     return result.hits.total == 0 ? false : true;
                 }
-                catch (HttpRequestException e)
+                catch (Exception ex)
                 {
-                    Console.WriteLine("\nException Caught!");
-                    Console.WriteLine("Message :{0} ", e.Message);
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
                     return true;
                 }
             }
@@ -78,10 +76,10 @@ namespace ElasticSQLServer.Utilities.Data.Destination
 
                     return await response.Content.ReadAsStringAsync();
                 }
-                catch (HttpRequestException e)
+                catch (Exception ex)
                 {
-                    Console.WriteLine("\nException Caught!");
-                    Console.WriteLine("Message :{0} ", e.Message);
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
                     return "";
                 }
             }
@@ -99,10 +97,10 @@ namespace ElasticSQLServer.Utilities.Data.Destination
                 {
                     HttpResponseMessage response = await client.PutAsync(url, httpContent);
                 }
-                catch (HttpRequestException e)
+                catch (Exception ex)
                 {
-                    Console.WriteLine("\nException Caught!");
-                    Console.WriteLine("Message :{0} ", e.Message);
+                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex.StackTrace);
                 }
             }
         }

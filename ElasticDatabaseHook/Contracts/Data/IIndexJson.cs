@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 
 namespace ElasticSQLServer.Contracts.Data
@@ -12,6 +13,6 @@ namespace ElasticSQLServer.Contracts.Data
         /// Create json for creating index.
         /// </summary>
         /// <returns></returns>
-        string CreateIndexJson(IEnumerable<Tuple<string, string>> indexData);
+        string CreateIndexJson(IEnumerable<Tuple<string, string>> indexData, IConfiguration configuration);
     }
 }

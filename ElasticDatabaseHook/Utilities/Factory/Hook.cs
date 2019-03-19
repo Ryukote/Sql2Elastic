@@ -1,5 +1,7 @@
 ﻿using ElasticSQLServer.Utilities.Data.Destination;
 using ElasticSQLServer.Utilities.Data.Source;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -16,10 +18,10 @@ namespace ElasticSQLServer.Utilities.Factory
         /// <summary>
         /// Hook constructor.
         /// </summary>
-        public Hook()
+        public Hook(IConfiguration configuration)
         {
-            serverData = new SQLServerData();
-            elasticSearch = new ElasticSearch6Data();
+            serverData = new SQLServerData(configuration);
+            elasticSearch = new ElasticSearch6Data(configuration);
         }
 
         /// <summary>
@@ -28,7 +30,15 @@ namespace ElasticSQLServer.Utilities.Factory
         /// <returns></returns>
         public async Task IterationProcess()
         {
-            await elasticSearch.InsertIntoDocument(await serverData.GetDatabaseDataAsync());
+            try
+            {
+                await elasticSearch.InsertIntoDocument(await serverData.GetDatabaseDataAsync());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
         /// <summary>
@@ -37,7 +47,15 @@ namespace ElasticSQLServer.Utilities.Factory
         /// <returns></returns>
         public async Task StartProcess()
         {
-            await elasticSearch.CreateIndex();
+            try
+            {
+                await elasticSearch.CreateIndex();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using ElasticSQLServer.Contracts.Data;
 using ElasticSQLServer.Utilities.Data.Mappers;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,14 +17,14 @@ namespace ElasticSQLServer.Utilities.Factory
         /// Creation of Elasticsearch index.
         /// </summary>
         /// <param name="indexData"></param>
+        /// <param name="configuration"></param>
         /// <returns></returns>
-        public string CreateIndexJson(IEnumerable<Tuple<string, string>> indexData)
+        public string CreateIndexJson(IEnumerable<Tuple<string, string>> indexData, IConfiguration configuration)
         {
             List<Tuple<string, string>> list = indexData.ToList();
             StringBuilder builder = new StringBuilder();
             SQLServer sqlServer = new SQLServer();
-            string document = Environment.GetEnvironmentVariable("ElasticDocument");
-            Console.WriteLine(document);
+            string document = configuration.GetValue<string>("ElasticDocument");
             builder.Append("{\"settings\":{\"number_of_shards\"")
                 .Append(":1")
                 .Append("},")

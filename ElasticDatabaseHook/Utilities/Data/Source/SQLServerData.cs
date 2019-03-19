@@ -1,4 +1,5 @@
 ﻿using ElasticSQLServer.Contracts.Data;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,18 +18,26 @@ namespace ElasticSQLServer.Utilities.Data.Source
         private string dbTable = "";
         private string tableSchema = "";
         private string dbName = "";
+        private string sqlHost = "";
+        private string dbUsername = "";
+        private string dbPassword = "";
+
+        private readonly IConfiguration _configuration;
 
         /// <summary>
         /// Initializing connection string, database table, table schema and database name.
         /// </summary>
-        public SQLServerData()
+        public SQLServerData(IConfiguration configuration)
         {
-            dbName = Environment.GetEnvironmentVariable("DbName");
-            Console.WriteLine(dbName);
-            connectionString = $"Data Source={Environment.GetEnvironmentVariable("SqlHost")};Initial Catalog={dbName};Persist Security Info=True;User ID={Environment.GetEnvironmentVariable("DbUsername")};Password={Environment.GetEnvironmentVariable("DbPassword")}";
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            dbTable = _configuration.GetValue<string>("DbTable");
+            tableSchema = _configuration.GetValue<string>("DbSchema");
+            dbName = _configuration.GetValue<string>("DbName");
+            sqlHost = _configuration.GetValue<string>("SqlHost");
+            dbUsername = _configuration.GetValue<string>("DbUsername");
+            dbPassword = _configuration.GetValue<string>("DbPassword");
 
-            dbTable = $"{Environment.GetEnvironmentVariable("DbTable")}";
-            tableSchema = $"{Environment.GetEnvironmentVariable("TableSchema")}";
+            connectionString = $"Data Source={sqlHost};Initial Catalog={dbName};Persist Security Info=True;User ID={dbUsername};Password={dbPassword}";
         }
 
         /// <summary>
@@ -85,17 +94,26 @@ namespace ElasticSQLServer.Utilities.Data.Source
         /// <returns>Filled data table that will be used for migration to Elasticsearch document.</returns>
         public async Task<DataTable> GetDatabaseDataAsync()
         {
-            using (SqlConnection connection = new SqlConnection(@connectionString))
+            try
             {
-                SqlCommand command = new SqlCommand($"select * from {dbTable}", connection);
-                await command.Connection.OpenAsync();
+                using (SqlConnection connection = new SqlConnection(@connectionString))
+                {
+                    SqlCommand command = new SqlCommand($"select * from {dbTable}", connection);
+                    await command.Connection.OpenAsync();
 
-                DataTable dataTable = new DataTable();
-                dataTable.Load(await command.ExecuteReaderAsync());
+                    DataTable dataTable = new DataTable();
+                    dataTable.Load(await command.ExecuteReaderAsync());
 
-                command.Connection.Close();
+                    command.Connection.Close();
 
-                return dataTable;
+                    return dataTable;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+                return null;
             }
         }
     }

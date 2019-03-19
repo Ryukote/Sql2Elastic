@@ -1,6 +1,8 @@
 ﻿using ElasticSQLServer.Utilities.Factory;
+using Microsoft.Extensions.Configuration;
 using System;
-using System.Timers;
+using System.Threading;
+using Timer = System.Timers.Timer;
 
 namespace ElasticSQLServer
 {
@@ -10,16 +12,19 @@ namespace ElasticSQLServer
         {
             try
             {
-                Hook hook = new Hook();
+                var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+
+                Hook hook = new Hook(configuration);
 
                 Timer timer = new Timer
                 {
-                    Interval = 10000,
+                    Interval = 600000,
                     Enabled = true
                 };
 
                 hook.StartProcess().GetAwaiter();
-
                 timer.Start();
 
                 timer.Elapsed += async (sender, e) =>
@@ -27,11 +32,13 @@ namespace ElasticSQLServer
                     await hook.IterationProcess();
                 };
 
+                Thread.Sleep(Timeout.Infinite);
                 Console.ReadLine();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
                 Console.ReadKey();
             }
         }

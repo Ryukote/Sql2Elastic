@@ -1,6 +1,7 @@
 ﻿using ElasticSQLServer.Contracts.Data;
 using ElasticSQLServer.Utilities.Data.Source;
 using ElasticSQLServer.Utilities.Factory;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
     {
         private string elasticHost = "";
         private string elasticIndex = "";
+        private string elasticDocument = "";
         private string url = "";
         private string documentUrl = "";
         private string hashRecord = "";
@@ -31,15 +33,21 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         private StringBuilder recordBuilder;
         private StringBuilder jsonBuilder;
 
+        private readonly IConfiguration _configuration;
+
         /// <summary>
         /// Elasticsearch data constructor.
         /// </summary>
-        public ElasticSearch6Data()
+        public ElasticSearch6Data(IConfiguration configuration)
         {
-            elasticHost = Environment.GetEnvironmentVariable("ElasticHost");
-            elasticIndex = Environment.GetEnvironmentVariable("ElasticIndex");
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+
+            elasticHost = _configuration.GetValue<string>("ElasticHost");
+            elasticIndex = _configuration.GetValue<string>("ElasticIndex");
+            elasticDocument = _configuration.GetValue<string>("ElasticDocument");
+
             url = elasticHost + "/" + elasticIndex;
-            documentUrl = url + "/" + Environment.GetEnvironmentVariable("ElasticDocument");
+            documentUrl = url + "/" + elasticDocument;
             records = new List<string>();
             builder = new StringBuilder();
             recordBuilder = new StringBuilder();
@@ -51,13 +59,21 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// </summary>
         public async Task CreateIndex()
         {
-            var result = await new SQLServerData().GetDataTypes();
-            var content = new Index().CreateIndexJson(result);
-
-            using (HttpContent httpContent = new StringContent(content))
+            try
             {
-                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                await new ElasticClient().ElasticPut(url, httpContent);
+                var result = await new SQLServerData(_configuration).GetDataTypes();
+                var content = new Index().CreateIndexJson(result, _configuration);
+
+                using (HttpContent httpContent = new StringContent(content))
+                {
+                    httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                    await new ElasticClient().ElasticPut(url, httpContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
             }
         }
 
@@ -67,6 +83,10 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <param name="sqlData"></param>
         public async Task InsertIntoDocument(DataTable sqlData)
         {
+            builder.Clear();
+            recordBuilder.Clear();
+            jsonBuilder.Clear();
+
             try
             {
                 var rows = sqlData.Rows;
@@ -147,7 +167,6 @@ namespace ElasticSQLServer.Utilities.Data.Destination
                     {
                         httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
                         await new ElasticClient().ElasticPost(documentUrl, httpContent);
-
                         Console.WriteLine($"New records are inserted into document at: {DateTime.Now.ToString()}");
                     }
                 }
@@ -165,11 +184,19 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <returns></returns>
         private async Task GetDocumentId()
         {
-            string response = "";
+            try
+            {
+                string response = "";
 
-            StringBuilder builder = new StringBuilder();
-            response = await new ElasticClient().ElasticGet(documentUrl + "/_search");
-            documentId = JsonConvert.DeserializeObject<dynamic>(response)._id;
+                StringBuilder builder = new StringBuilder();
+                response = await new ElasticClient().ElasticGet(documentUrl + "/_search");
+                documentId = JsonConvert.DeserializeObject<dynamic>(response)._id;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
         private async Task<bool> HashExist(string documentId, string hash)
@@ -187,12 +214,13 @@ namespace ElasticSQLServer.Utilities.Data.Destination
                 using (HttpContent httpContent = new StringContent(builder.ToString()))
                 {
                     httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                    return await new ElasticClient().ElasticGetBool(documentId + "/_search?pretty=true", httpContent);
+                    return await new ElasticClient().ElasticGetBool(documentUrl + documentId + "?pretty=true", httpContent);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
                 return false;
             }
         }
