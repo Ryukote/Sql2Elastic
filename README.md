@@ -1,4 +1,4 @@
-#Elasticsearch database hook
+# Elasticsearch database hook
 Project that hooks on relational database and migrate data to Elasticsearch.
 Application does not care about where database is comming from, what is the table name where you store logs, how many columns it have
 and what data types are those columns of. Application will map data types from database to Elasticsearch and get all column names,
