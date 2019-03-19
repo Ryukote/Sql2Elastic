@@ -10,7 +10,8 @@ do what it needs to to.
 You can use this application with docker. Find more on: https://hub.docker.com/r/ryukote/elasticdatabasehook
 
 # Types of databases that it can hook to
-For now it can only hook to SQL Server
+For now it can only hook to SQL Server.
+Plan is to support Oracle DB and MySQL.
 
 # You want to support this application?
 If you think this application is great idea and you want to support this, you can help with issues, pull requests and small donations.
