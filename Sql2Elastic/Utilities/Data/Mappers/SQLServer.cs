@@ -1,7 +1,7 @@
-﻿using ElasticSQLServer.Contracts.Mapping;
+﻿using Sql2Elastic.Contracts.Mapping;
 using System.Collections.Generic;
 
-namespace ElasticSQLServer.Utilities.Data.Mappers
+namespace Sql2Elastic.Utilities.Data.Mappers
 {
     /// <summary>
     /// Mapping SQL Server data type to Elasticsearch data type.
@@ -11,8 +11,8 @@ namespace ElasticSQLServer.Utilities.Data.Mappers
         /// <summary>
         /// Method for mapping SQL Server data type to Elasticsearch data type.
         /// </summary>
-        /// <param name="key">Value that represents SQL Server data type reflected into C# data type.</param>
-        /// <returns>Returs transformed data type from reflected SQL Server column in the table to Elasticsearch equivalent data type.</returns>
+        /// <param name="key">Value that represents SQL Server data type.</param>
+        /// <returns>Returs transformed data type from SQL Server column in the table to Elasticsearch equivalent data type.</returns>
         public string GetMappedType(string key)
         {
             Dictionary<string, string> dictionary = new Dictionary<string, string>();

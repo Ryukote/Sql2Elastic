@@ -1,10 +1,10 @@
-﻿using ElasticSQLServer.Utilities.Factory;
+﻿using Sql2Elastic.Utilities.Factory;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading;
 using Timer = System.Timers.Timer;
 
-namespace ElasticSQLServer
+namespace Sql2Elastic
 {
     class Program
     {

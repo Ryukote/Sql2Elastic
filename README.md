@@ -1,21 +1,30 @@
-# Elasticsearch database hook
-Project that hooks on relational database and migrate data to Elasticsearch.
-Application does not care about where database is comming from, what is the table name where you store logs, how many columns it have
-and what data types are those columns of. Application will map data types from database to Elasticsearch and get all column names,
-so Elasticsearch can store data that is 1 on 1 with data in SQL Server.
+# Sql2Elastic
 
-Application is hooking on database every 10 minute, to avoid potential handling of big data where it wouldn't have enough time to
-do what it needs to to.
+Sql2Elastic is an application that migrates your database tables to Elasticsearch documents.
+The best scenario would be to migrate log tables to Elasticsearch with this.
+For now it supports migration from **SQL Server** and **Postgres.**
 
-You can use this application with docker. Find more on: https://hub.docker.com/r/ryukote/elasticdatabasehook
+In the future it will support other databases like Oracle.
 
-# Types of databases that it can hook to
-For now it can only hook to SQL Server.
-Plan is to support Oracle DB and MySQL.
+## How to run this image
 
-# You want to support this application?
-If you think this application is great idea and you want to support this, you can help with issues, pull requests and small donations.
-You can do donations with:
-  - BTC on: 322SRqTS3EeKGaVFuo6xsw8e5Xji4QcJR6
-  - ETH on: 0xc06d8766061e0644fb780f38abb1226ba289664c
-  - XRP on: rE1sdh25BJQ3qFwngiTBwaq3zPGGYcrjp1 with destination tag: 59558
+```bash
+docker run --name sql2elastic --restart always -e "DbType=<type>" -e "SqlHost=<sql_address_with_port>" -e "DbName=<database_name>" -e "DbUsername=<database_username>" -e "DbPassword=<database_password>" -e "DbTable=<table_to_migrate>" -e "DbSchema=<schema_name>" -e "ElasticHost=<elastic_address_with_port>" -e "ElasticIndex=<index_name>" -e "ElasticDocument=<document_name>"
+```
+
+Notice:
+
+1) Replace "<type>" with either "SQL Server" or "Postgres"
+2) Replace "<sql_address_with_port>" with valid information in format:
+
+* "ip_address, port" if you are using SQL Server (in this case you need to remove DbPort variable)
+* "ip_address" if you are using Postgres (in this case you need to include your Postgres port in DbPort variable)
+
+3) Replace "<database_name>" with valid database name
+4) Replace "<database_username>" with valid database user that have rights to access this database
+5) Replace "<database_password>" with valid password of user
+6) Replace "<table_to_migrate>" with valid database table. **Don't** specify table schema in this parameter
+7) Replace "<schema_name>" with valid schema name of mentioned database table
+8) Replace "<elastic_address_with_port>" with Elasticsearch IP address(you need to add http/https prefix to Elasticsearch IP address) and port
+9) Replace "<index_name>" with whatever name you want to use for your index, but it needs to be all lower case
+10) Replace "<document_name>" with whatever name you want to use for your document, but it needs to be all lower case
