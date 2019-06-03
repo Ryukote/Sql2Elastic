@@ -1,4 +1,4 @@
-﻿namespace ElasticSQLServer.Contracts.Mapping
+﻿namespace Sql2Elastic.Contracts.Mapping
 {
     /// <summary>
     /// Mapping data types from source to destination.

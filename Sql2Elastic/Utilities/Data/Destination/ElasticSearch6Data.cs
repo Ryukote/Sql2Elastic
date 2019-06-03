@@ -1,6 +1,6 @@
-﻿using ElasticSQLServer.Contracts.Data;
-using ElasticSQLServer.Utilities.Data.Source;
-using ElasticSQLServer.Utilities.Factory;
+﻿using Sql2Elastic.Utilities.Data.Source;
+using Sql2Elastic.Contracts.Data;
+using Sql2Elastic.Utilities.Factory;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
@@ -12,13 +12,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ElasticSQLServer.Utilities.Data.Destination
+namespace Sql2Elastic.Utilities.Data.Destination
 {
     /// <summary>
     /// Elasticsearch data.
     /// </summary>
     public class ElasticSearch6Data : IDataDestination
     {
+        private string dbType = "";
         private string elasticHost = "";
         private string elasticIndex = "";
         private string elasticDocument = "";
@@ -42,6 +43,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
+            dbType = _configuration.GetValue<string>("DbType");
             elasticHost = _configuration.GetValue<string>("ElasticHost");
             elasticIndex = _configuration.GetValue<string>("ElasticIndex");
             elasticDocument = _configuration.GetValue<string>("ElasticDocument");
@@ -61,7 +63,23 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         {
             try
             {
-                var result = await new SQLServerData(_configuration).GetDataTypes();
+                IEnumerable<Tuple<string, string>> result;
+
+                if (dbType.Equals("Postgres"))
+                {
+                    result = await new PostgresData(_configuration).GetDataTypes();
+                }
+
+                else if (dbType.Equals("SQLServer"))
+                {
+                    result = await new SQLServerData(_configuration).GetDataTypes();
+                }
+
+                else
+                {
+                    result = null;
+                }
+
                 var content = new Index().CreateIndexJson(result, _configuration);
 
                 using (HttpContent httpContent = new StringContent(content))
@@ -80,7 +98,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <summary>
         /// Converting source data to Elasticsearch data and saving it if the data is new.
         /// </summary>
-        /// <param name="sqlData"></param>
+        /// <param name="sqlData">DataTable representing data from SQL database.</param>
         public async Task InsertIntoDocument(DataTable sqlData)
         {
             builder.Clear();
@@ -181,7 +199,6 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <summary>
         /// Getting Elasticsearch document id.
         /// </summary>
-        /// <returns></returns>
         private async Task GetDocumentId()
         {
             try
@@ -199,6 +216,12 @@ namespace ElasticSQLServer.Utilities.Data.Destination
             }
         }
 
+        /// <summary>
+        /// Check if hash exist in the document to avoid storing duplicate records.
+        /// </summary>
+        /// <param name="documentId">Name of document.</param>
+        /// <param name="hash">Hash to check in the document.</param>
+        /// <returns>Returns if hash exist or not.</returns>
         private async Task<bool> HashExist(string documentId, string hash)
         {
             try

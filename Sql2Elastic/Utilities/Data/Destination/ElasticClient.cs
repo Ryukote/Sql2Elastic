@@ -3,7 +3,7 @@ using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace ElasticSQLServer.Utilities.Data.Destination
+namespace Sql2Elastic.Utilities.Data.Destination
 {
     /// <summary>
     /// Elasticsearch client.
@@ -13,7 +13,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <summary>
         /// Elasticsearch with get method.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns result of Elasticsearch search with GET method.</returns>
         public async Task<string> ElasticGet(string url)
         {
             using (HttpClient client = new HttpClient())
@@ -40,7 +40,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// </summary>
         /// <param name="url">Where method will check if record exist.</param>
         /// <param name="httpContent">Record that will be checked for existance.</param>
-        /// <returns></returns>
+        /// <returns>Returns boolean representing existence of record in Elasticsearch document.</returns>
         public async Task<bool> ElasticGetBool(string url, HttpContent httpContent)
         {
             using (HttpClient client = new HttpClient())
@@ -65,7 +65,7 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <summary>
         /// Elasticsearch post method.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns string of Elasticsearch POST method.</returns>
         public async Task<string> ElasticPost(string url, HttpContent httpContent)
         {
             using (HttpClient client = new HttpClient())
@@ -88,7 +88,6 @@ namespace ElasticSQLServer.Utilities.Data.Destination
         /// <summary>
         /// Elasticsearch put method.
         /// </summary>
-        /// <returns></returns>
         public async Task ElasticPut(string url, HttpContent httpContent)
         {
             using (HttpClient client = new HttpClient())

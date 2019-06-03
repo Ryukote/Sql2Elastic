@@ -1,12 +1,12 @@
-﻿using ElasticSQLServer.Contracts.Data;
-using ElasticSQLServer.Utilities.Data.Mappers;
+﻿using Sql2Elastic.Contracts.Data;
+using Sql2Elastic.Utilities.Data.Mappers;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ElasticSQLServer.Utilities.Factory
+namespace Sql2Elastic.Utilities.Factory
 {
     /// <summary>
     /// Elasticsearch index.
@@ -18,7 +18,7 @@ namespace ElasticSQLServer.Utilities.Factory
         /// </summary>
         /// <param name="indexData"></param>
         /// <param name="configuration"></param>
-        /// <returns></returns>
+        /// <returns>Returns prepared JSON for index creation.</returns>
         public string CreateIndexJson(IEnumerable<Tuple<string, string>> indexData, IConfiguration configuration)
         {
             List<Tuple<string, string>> list = indexData.ToList();

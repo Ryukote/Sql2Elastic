@@ -1,11 +1,10 @@
-﻿using ElasticSQLServer.Utilities.Data.Destination;
-using ElasticSQLServer.Utilities.Data.Source;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using Sql2Elastic.Utilities.Data.Destination;
+using Sql2Elastic.Utilities.Data.Source;
 using System;
-using System.Data;
 using System.Threading.Tasks;
 
-namespace ElasticSQLServer.Utilities.Factory
+namespace Sql2Elastic.Utilities.Factory
 {
     /// <summary>
     /// Hook with database and Elasticsearch.

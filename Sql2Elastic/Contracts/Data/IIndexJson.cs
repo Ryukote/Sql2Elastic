@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ElasticSQLServer.Contracts.Data
+namespace Sql2Elastic.Contracts.Data
 {
     /// <summary>
     /// Create json for creating index.
@@ -12,7 +12,7 @@ namespace ElasticSQLServer.Contracts.Data
         /// <summary>
         /// Create json for creating index.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns collection of string Tuple object that represent index parameters.</returns>
         string CreateIndexJson(IEnumerable<Tuple<string, string>> indexData, IConfiguration configuration);
     }
 }

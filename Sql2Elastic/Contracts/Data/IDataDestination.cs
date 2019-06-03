@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Threading.Tasks;
 
-namespace ElasticSQLServer.Contracts.Data
+namespace Sql2Elastic.Contracts.Data
 {
     /// <summary>
     /// Elasticsearch index and document operations.
@@ -11,13 +11,11 @@ namespace ElasticSQLServer.Contracts.Data
         /// <summary>
         /// Creating Elasticsearch index.
         /// </summary>
-        /// <returns></returns>
         Task CreateIndex();
 
         /// <summary>
         /// Inserting new records in the Elasticsearch document in the index.
         /// </summary>
-        /// <returns></returns>
         Task InsertIntoDocument(DataTable sqlData);
     }
 }
